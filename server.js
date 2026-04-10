@@ -30,7 +30,7 @@ passport.use(new JWTStrategy(opts, (jwt_payload, done) => {
   }
 }));
 
-/* ================= ROUTES ================= */
+
 
 // REGISTER
 app.post("/api/user/register", (req, res) => {
@@ -90,7 +90,7 @@ app.delete("/api/user/favourites/:id",
   }
 );
 
-/* ================= START SERVER ================= */
+
 
 userService.connect()
   .then(() => {
@@ -103,5 +103,5 @@ userService.connect()
     process.exit();
   });
 
-/* ================= VERCEL EXPORT ================= */
+
 module.exports = app;
