@@ -1,14 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-let mongoDBConnectionString = "mongodb+srv://Dineth_dg:6565abdd@senecaweb.qb6tfau.mongodb.net/Web422A03?appName=SenecaWeb";
-
-// kjvcVc30Li2KF6gf
-// dgtechyt25_db_user
-
-// kjvcVc30Li2KF6gf
-
-// kjvcVc30Li2KF6gf
+let mongoDBConnectionString = process.env.MONGO_URL;
 
 let Schema = mongoose.Schema;
 
@@ -52,7 +45,7 @@ module.exports.registerUser = function (userData) {
                 let newUser = new User(userData);
 
                 newUser.save().then(() => {
-                    resolve("User " + userData.userName + " successfully registered");  
+                    resolve("User " + userData.userName + " successfully registered");
                 }).catch(err => {
                     if (err.code == 11000) {
                         reject("User Name already taken");
@@ -71,6 +64,12 @@ module.exports.checkUser = function (userData) {
         User.findOne({ userName: userData.userName })
             .exec()
             .then(user => {
+
+                if (!user) {
+                    reject("Unable to find user " + userData.userName);
+                    return;
+                }
+
                 bcrypt.compare(userData.password, user.password).then(res => {
                     if (res === true) {
                         resolve(user);
@@ -78,6 +77,7 @@ module.exports.checkUser = function (userData) {
                         reject("Incorrect password for user " + userData.userName);
                     }
                 });
+
             }).catch(err => {
                 reject("Unable to find user " + userData.userName);
             });
@@ -95,10 +95,9 @@ module.exports.getFavourites = function (id) {
                 reject(`Unable to get favourites for user with id: ${id}`);
             });
     });
-}
+};
 
 module.exports.addFavourite = function (id, favId) {
-
     return new Promise(function (resolve, reject) {
 
         User.findById(id).exec().then(user => {
@@ -107,18 +106,15 @@ module.exports.addFavourite = function (id, favId) {
                     { $addToSet: { favourites: favId } },
                     { new: true }
                 ).exec()
-                    .then(user => { resolve(user.favourites); })
-                    .catch(err => { reject(`Unable to update favourites for user with id: ${id}`); })
+                    .then(user => resolve(user.favourites))
+                    .catch(() => reject(`Unable to update favourites for user with id: ${id}`));
             } else {
                 reject(`Unable to update favourites for user with id: ${id}`);
             }
-
-        })
+        });
 
     });
-
-
-}
+};
 
 module.exports.removeFavourite = function (id, favId) {
     return new Promise(function (resolve, reject) {
@@ -126,11 +122,7 @@ module.exports.removeFavourite = function (id, favId) {
             { $pull: { favourites: favId } },
             { new: true }
         ).exec()
-            .then(user => {
-                resolve(user.favourites);
-            })
-            .catch(err => {
-                reject(`Unable to update favourites for user with id: ${id}`);
-            })
+            .then(user => resolve(user.favourites))
+            .catch(() => reject(`Unable to update favourites for user with id: ${id}`));
     });
-}
+};

@@ -18,7 +18,7 @@ app.use(cors());
 app.use(passport.initialize());
 
 const opts = {
-  jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
+  jwtFromRequest: ExtractJWT.fromAuthHeaderWithScheme("JWT"),
   secretOrKey: process.env.JWT_SECRET
 };
 
@@ -30,19 +30,19 @@ passport.use(new JWTStrategy(opts, (jwt_payload, done) => {
   }
 }));
 
+/* ================= ROUTES ================= */
+
+// REGISTER
 app.post("/api/user/register", (req, res) => {
   userService.registerUser(req.body)
-    .then((msg) => {
-      res.json({ message: msg });
-    })
-    .catch((msg) => {
-      res.status(422).json({ message: msg });
-    });
+    .then(msg => res.json({ message: msg }))
+    .catch(msg => res.status(422).json({ message: msg }));
 });
 
+// LOGIN
 app.post("/api/user/login", (req, res) => {
   userService.checkUser(req.body)
-    .then((user) => {
+    .then(user => {
 
       const payload = {
         _id: user._id,
@@ -57,56 +57,40 @@ app.post("/api/user/login", (req, res) => {
       });
 
     })
-    .catch((msg) => {
-      res.status(422).json({ message: msg });
-    });
+    .catch(msg => res.status(422).json({ message: msg }));
 });
 
+// GET favourites
 app.get("/api/user/favourites",
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
-
     userService.getFavourites(req.user._id)
-      .then(data => {
-        res.json(data);
-      })
-      .catch(msg => {
-        res.status(422).json({ error: msg });
-      });
-
+      .then(data => res.json(data))
+      .catch(msg => res.status(422).json({ error: msg }));
   }
 );
 
+// ADD favourite
 app.put("/api/user/favourites/:id",
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
-
     userService.addFavourite(req.user._id, req.params.id)
-      .then(data => {
-        res.json(data);
-      })
-      .catch(msg => {
-        res.status(422).json({ error: msg });
-      });
-
+      .then(data => res.json(data))
+      .catch(msg => res.status(422).json({ error: msg }));
   }
 );
 
+// REMOVE favourite
 app.delete("/api/user/favourites/:id",
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
-
     userService.removeFavourite(req.user._id, req.params.id)
-      .then(data => {
-        res.json(data);
-      })
-      .catch(msg => {
-        res.status(422).json({ error: msg });
-      });
-
+      .then(data => res.json(data))
+      .catch(msg => res.status(422).json({ error: msg }));
   }
-  
 );
+
+/* ================= START SERVER ================= */
 
 userService.connect()
   .then(() => {
@@ -118,3 +102,6 @@ userService.connect()
     console.log("unable to start the server: " + err);
     process.exit();
   });
+
+/* ================= VERCEL EXPORT ================= */
+module.exports = app;
